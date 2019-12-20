@@ -1,9 +1,8 @@
 import org.apache.kafka.common.serialization.Serdes;
-import org.apache.kafka.streams.StreamsBuilder;
-import org.apache.kafka.streams.StreamsConfig;
-import org.apache.kafka.streams.kstream.KStream;
+import org.apache.kafka.streams.*;
 
 import java.util.Properties;
+import java.util.concurrent.CountDownLatch;
 
 public class Pipe {
     public static void main(String[] args) {
@@ -14,8 +13,29 @@ public class Pipe {
         props.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, Serdes.String().getClass());
 
         StreamsBuilder builder = new StreamsBuilder();
-        KStream<String, String> source = builder.stream("weather-topic");
-        source.to("weather-topic-output");
+        builder.stream("hotels-topic-test").map((key, value) -> KeyValue.pair(value.toString().split(",")[7], value)).to("hotels-topic-output");
+        final Topology topology = builder.build();
+        final KafkaStreams streams = new KafkaStreams(topology, props);
+        final CountDownLatch latch = new CountDownLatch(1);
+
+        Runtime.getRuntime().
+
+                addShutdownHook(new Thread("streams-shutdown-hook") {
+                    @Override
+                    public void run() {
+                        streams.close();
+                        latch.countDown();
+                    }
+                });
+
+        try {
+            streams.start();
+            latch.await();
+        } catch (
+                Throwable e) {
+            System.exit(1);
+        }
+        System.exit(0);
     }
 }
 
