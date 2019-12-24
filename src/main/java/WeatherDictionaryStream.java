@@ -7,106 +7,72 @@ import org.apache.kafka.streams.*;
 import org.apache.kafka.streams.kstream.Consumed;
 import org.apache.kafka.streams.kstream.KStream;
 import org.apache.kafka.streams.kstream.Produced;
-import serdes.weather.JsonWeatherDeserializer;
-import serdes.weather.JsonWeatherSerializer;
+import utils.serdes.hotel.JsonHotelDeserializer;
+import utils.serdes.hotel.JsonHotelSerializer;
+import utils.serdes.weather.JsonWeatherDeserializer;
+import utils.serdes.weather.JsonWeatherSerializer;
 
-import javax.ws.rs.DefaultValue;
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
 
+import data.Hotel;
+import data.Weather;
+
 
 public class WeatherDictionaryStream {
-    static class WeatherMessage {
-
-        private Double lng;
-        private Double lat;
-        private Double avg_tmpr_f;
-        private Double avg_tmpr_c;
-        private String wthr_date;
-
-        @DefaultValue("empty")
-        private String geoHash;
-
-        public Double getLng() {
-            return lng;
-        }
-
-        public void setLng(Double lng) {
-            this.lng = lng;
-        }
-
-        public Double getLat() {
-            return lat;
-        }
-
-        public void setLat(Double lat) {
-            this.lat = lat;
-        }
-
-        public Double getAvg_tmpr_f() {
-            return avg_tmpr_f;
-        }
-
-        public void setAvg_tmpr_f(Double avg_tmpr_f) {
-            this.avg_tmpr_f = avg_tmpr_f;
-        }
-
-        public Double getAvg_tmpr_c() {
-            return avg_tmpr_c;
-        }
-
-        public void setAvg_tmpr_c(Double avg_tmpr_c) {
-            this.avg_tmpr_c = avg_tmpr_c;
-        }
-
-        public String getWthr_date() {
-            return wthr_date;
-        }
-
-        public void setWthr_date(String wthr_date) {
-            this.wthr_date = wthr_date;
-        }
-
-        public void setGeoHash(String geoHash) {
-            this.geoHash = geoHash;
-        }
-
-        public String getGeoHash() {
-            return geoHash;
-        }
-    }
 
 
     public static void main(String[] args) {
         Properties props = new Properties();
-        props.put(StreamsConfig.APPLICATION_ID_CONFIG, "weather-dictionary-stream");
+        props.put(StreamsConfig.APPLICATION_ID_CONFIG, "1");
         props.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, "sandbox-hdp.hortonworks.com:6667");
 
-        Map<String, Object> serdeProps = new HashMap<>();
+        final Map<String, Object> serdeProps = new HashMap<>();
 
-        final Serializer<WeatherMessage> weatherMessageSerializer = new JsonWeatherSerializer<>();
-        serdeProps.put("JsonPOJOClass", WeatherMessage.class);
-        weatherMessageSerializer.configure(serdeProps, false);
+        final Serializer<Weather> weatherSerializer = new JsonWeatherSerializer();
+        serdeProps.put("weatherSer", Weather.class);
+        weatherSerializer.configure(serdeProps, false);
 
-        final Deserializer<WeatherMessage> weatherMessageDeserializer = new JsonWeatherDeserializer<>();
-        serdeProps.put("JsonPOJOClass", WeatherMessage.class);
-        weatherMessageDeserializer.configure(serdeProps, false);
+        final Deserializer<Weather> weatherDeserializer = new JsonWeatherDeserializer();
+        serdeProps.put("weatherDe", Weather.class);
+        weatherDeserializer.configure(serdeProps, false);
 
-        final Serde<WeatherMessage> weatherMessageSerde = Serdes.serdeFrom(weatherMessageSerializer, weatherMessageDeserializer);
+        final Serializer<Hotel> hotelSerializer = new JsonHotelSerializer();
+        serdeProps.put("hotelSer", Hotel.class);
+        hotelSerializer.configure(serdeProps, false);
+
+        final Deserializer<Hotel> hotelDeserializer = new JsonHotelDeserializer();
+        serdeProps.put("hotelDe", Hotel.class);
+        hotelDeserializer.configure(serdeProps, false);
+
+        final Serde<Weather> weatherSerde = Serdes.serdeFrom(weatherSerializer, weatherDeserializer);
+        final Serde<Hotel> hotelSerde = Serdes.serdeFrom(hotelSerializer, hotelDeserializer);
 
 
         StreamsBuilder builder = new StreamsBuilder();
 
-        KStream<String, WeatherMessage> weatherInput = builder.stream("weather-topic", Consumed.with(Serdes.String(), weatherMessageSerde));
+        KStream<String, Weather> weatherInput = builder.stream("weather-topic", Consumed.with(Serdes.String(), weatherSerde));
         weatherInput.mapValues(msg -> {
             msg.setGeoHash(GeoHash.geoHashStringWithCharacterPrecision(msg.getLat(), msg.getLng(), 5));
             return msg;
-        }).to("weather-dictionary-topic", Produced.with(Serdes.String(), weatherMessageSerde));
-        final Topology topology = builder.build();
-        final KafkaStreams streams = new KafkaStreams(topology, props);
-        System.out.println(topology.describe());
-        final CountDownLatch latch = new CountDownLatch(1);
+        }).to("weather-dictionary-topic", Produced.with(Serdes.String(), weatherSerde));
 
+        KStream<String, Hotel> source = builder.stream("hotels-topic", Consumed.with(Serdes.String(), hotelSerde));
+        source.mapValues(msg -> {
+            List<String> line = Arrays.asList(msg.toString().split(","));
+            msg.setId(Integer.valueOf(line.get(0)));
+            msg.setName(line.get(1));
+            msg.setCountry(line.get(2));
+            msg.setCity(line.get(3));
+            msg.setAddress(line.get(4));
+            msg.setLatitude(Long.valueOf(line.get(5)));
+            msg.setLongitude(Long.valueOf(line.get(6)));
+            msg.setGeoHash(line.get(7));
+            return msg;
+        }).to("hotels-dictionary-topic", Produced.with(Serdes.String(), hotelSerde));
+
+        final KafkaStreams streams = new KafkaStreams(builder.build(), props);
+        final CountDownLatch latch = new CountDownLatch(1);
         Runtime.getRuntime().addShutdownHook(new Thread("streams-hook-thread") {
             @Override
             public void run() {
