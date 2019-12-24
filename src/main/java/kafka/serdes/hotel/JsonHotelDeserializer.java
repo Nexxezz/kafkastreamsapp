@@ -1,11 +1,11 @@
-package utils.serdes.hotel;
+package kafka.serdes.hotel;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import kafka.data.Hotel;
 import org.apache.kafka.common.errors.SerializationException;
 import org.apache.kafka.common.serialization.Deserializer;
 
 import java.util.Map;
-import data.Hotel;
 public class JsonHotelDeserializer implements Deserializer<Hotel> {
 
         private ObjectMapper objectMapper = new ObjectMapper();

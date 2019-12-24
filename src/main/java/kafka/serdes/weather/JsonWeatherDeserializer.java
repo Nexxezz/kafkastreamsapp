@@ -1,12 +1,14 @@
-package utils.serdes.weather;
+package kafka.serdes.weather;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import kafka.data.Weather;
 import org.apache.kafka.common.errors.SerializationException;
 import org.apache.kafka.common.serialization.Deserializer;
 
 import java.util.Map;
-import data.Weather;
+
 public class JsonWeatherDeserializer implements Deserializer<Weather> {
+    
     private ObjectMapper objectMapper = new ObjectMapper();
 
 
@@ -24,7 +26,7 @@ public class JsonWeatherDeserializer implements Deserializer<Weather> {
             return null;
 
         try {
-            return objectMapper.treeToValue(objectMapper.readTree(bytes),Weather.class);
+            return objectMapper.treeToValue(objectMapper.readTree(bytes), Weather.class);
         } catch (Exception e) {
             throw new SerializationException(e);
         }
