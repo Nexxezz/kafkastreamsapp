@@ -1,10 +1,11 @@
-package utils.serdes.weather;
+package kafka.serdes.weather;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import kafka.data.Weather;
 import org.apache.kafka.common.errors.SerializationException;
-import java.util.Map;
-import data.Weather;
 import org.apache.kafka.common.serialization.Serializer;
+
+import java.util.Map;
 
 public class JsonWeatherSerializer implements Serializer<Weather> {
     private final ObjectMapper objectMapper = new ObjectMapper();
