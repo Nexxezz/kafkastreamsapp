@@ -10,7 +10,7 @@ import lombok.*;
 @EqualsAndHashCode
 public class Hotel {
 
-    public static final String COMMA_DELIMETER = ",";
+    public static final String COMMA_DELIMITER = ",";
 
     @JsonProperty("id")
     private Long id;
@@ -41,13 +41,13 @@ public class Hotel {
         if (id == null)
             return "";
         else
-            return id.toString() + COMMA_DELIMETER +
-                    name + COMMA_DELIMETER +
-                    country + COMMA_DELIMETER +
-                    city + COMMA_DELIMETER +
-                    address + COMMA_DELIMETER +
-                    latitude.toString() + COMMA_DELIMETER +
-                    longitude.toString() + COMMA_DELIMETER +
+            return id.toString() + COMMA_DELIMITER +
+                    name + COMMA_DELIMITER +
+                    country + COMMA_DELIMITER +
+                    city + COMMA_DELIMITER +
+                    address + COMMA_DELIMITER +
+                    latitude.toString() + COMMA_DELIMITER +
+                    longitude.toString() + COMMA_DELIMITER +
                     geoHash;
     }
 }
