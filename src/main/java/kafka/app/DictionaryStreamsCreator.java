@@ -21,8 +21,8 @@ import org.apache.kafka.streams.kstream.Produced;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
-import java.util.concurrent.CountDownLatch;
 import java.util.UUID;
+import java.util.concurrent.CountDownLatch;
 
 
 public class DictionaryStreamsCreator {
@@ -31,7 +31,6 @@ public class DictionaryStreamsCreator {
     public static void main(String[] args) {
         Properties props = new Properties();
         props.put(StreamsConfig.APPLICATION_ID_CONFIG, UUID.randomUUID().toString());
-        props.put(StreamsConfig.APPLICATION_ID_CONFIG, "1");
         props.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, "sandbox-hdp.hortonworks.com:6667");
 
         final Map<String, Object> serdeProps = new HashMap<>();
