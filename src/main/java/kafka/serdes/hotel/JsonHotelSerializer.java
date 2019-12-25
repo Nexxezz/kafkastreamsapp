@@ -2,7 +2,6 @@ package kafka.serdes.hotel;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import kafka.data.Hotel;
-import org.apache.kafka.common.errors.SerializationException;
 import org.apache.kafka.common.serialization.Serializer;
 
 import java.util.Map;
@@ -18,14 +17,7 @@ public class JsonHotelSerializer implements Serializer<Hotel> {
 
     @Override
     public byte[] serialize(String topic, Hotel hotel) {
-        if (hotel == null)
-            return null;
-
-        try {
-            return objectMapper.writeValueAsBytes(hotel);
-        } catch (Exception e) {
-            throw new SerializationException("Error serializing JSON message", e);
-        }
+        return hotel.toString().getBytes();
     }
 
     @Override

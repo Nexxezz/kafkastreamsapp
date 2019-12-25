@@ -2,7 +2,6 @@ package kafka.serdes.hotel;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import kafka.data.Hotel;
-import org.apache.kafka.common.errors.SerializationException;
 import org.apache.kafka.common.serialization.Deserializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,7 +19,6 @@ public class JsonHotelDeserializer implements Deserializer<Hotel> {
     public JsonHotelDeserializer() {
     }
 
-    @SuppressWarnings("unchecked")
     @Override
     public void configure(Map<String, ?> props, boolean isKey) {
     }
@@ -30,16 +28,10 @@ public class JsonHotelDeserializer implements Deserializer<Hotel> {
         if (bytes == null)
             return null;
 
-        try {
-            String[] message = new String(bytes).split(",");
+        String[] arr = new String(bytes).split(",");
 
-            Hotel hotel = new Hotel(Long.parseLong(message[0]), message[1], message[2], message[3], message[4],
-                    Double.valueOf(message[5]), Double.valueOf(message[6]), message[7].substring(0,message[7].length()-2));
-            return hotel;
-        } catch (Exception e) {
-            throw new SerializationException(e);
-        }
-
+        return new Hotel(Long.parseLong(arr[0]), arr[1], arr[2], arr[3], arr[4],
+                Double.valueOf(arr[5]), Double.valueOf(arr[6]), arr[7].substring(0, arr[7].length() - 2));
     }
 
     @Override

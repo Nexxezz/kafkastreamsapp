@@ -1,23 +1,31 @@
-/*package utils.serdes.hotel;
+package utils.serdes.hotel;
 
 import kafka.data.Hotel;
 import kafka.serdes.hotel.JsonHotelSerializer;
 import org.junit.jupiter.api.Test;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 
 class JsonHotelSerializerTest {
 
+    private static final Hotel testHotel = new Hotel(23L, "name", "country",
+            "city", "address", 5.0, 6.0, "geoHash");
+
+    public static final String testHotelAsString = "23,name,country,city,address,5.0,6.0,geoHash";
+
     @Test
     void serialize() {
         JsonHotelSerializer serializer = new JsonHotelSerializer();
-        Hotel hotel = new Hotel(23L, "1", "2", "3", "4", "5", "6", "7");
-        byte[] expectedHotelBytes = hotel.toString().getBytes();
-        System.out.println(hotel.toString());
-        byte[] actualHotelBytes = serializer.serialize("topic",hotel);
 
-        assertEquals(expectedHotelBytes, actualHotelBytes);
+        byte[] actualHotelBytes = serializer.serialize("topic", testHotel);
+
+        assertArrayEquals(testHotelAsString.getBytes(), actualHotelBytes);
+    }
+
+    @Test
+    void toStringTest() {
+        assertEquals(testHotelAsString, testHotel.toString());
     }
 }
-*/
