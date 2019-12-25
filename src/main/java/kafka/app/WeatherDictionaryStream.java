@@ -68,8 +68,8 @@ public class WeatherDictionaryStream {
             msg.setCountry(line.get(2));
             msg.setCity(line.get(3));
             msg.setAddress(line.get(4));
-            msg.setLatitude(Long.valueOf(line.get(5)));
-            msg.setLongitude(Long.valueOf(line.get(6)));
+            msg.setLatitude(line.get(5));
+            msg.setLongitude(line.get(6));
             msg.setGeoHash(line.get(7));
             return msg;
         }).to("hotels-dictionary-topic", Produced.with(Serdes.String(), hotelSerde));
