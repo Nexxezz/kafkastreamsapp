@@ -61,18 +61,7 @@ public class WeatherDictionaryStream {
         }).to("weather-dictionary-topic", Produced.with(Serdes.String(), weatherSerde));
 
         KStream<String, Hotel> source = builder.stream("hotels-topic", Consumed.with(Serdes.String(), hotelSerde));
-        source.mapValues(msg -> {
-            List<String> line = Arrays.asList(msg.toString().split(","));
-            msg.setId(Integer.valueOf(line.get(0)));
-            msg.setName(line.get(1));
-            msg.setCountry(line.get(2));
-            msg.setCity(line.get(3));
-            msg.setAddress(line.get(4));
-            msg.setLatitude(line.get(5));
-            msg.setLongitude(line.get(6));
-            msg.setGeoHash(line.get(7));
-            return msg;
-        }).to("hotels-dictionary-topic", Produced.with(Serdes.String(), hotelSerde));
+        source.to("hotels-dictionary-topic", Produced.with(Serdes.String(), hotelSerde));
 
         final KafkaStreams streams = new KafkaStreams(builder.build(), props);
         final CountDownLatch latch = new CountDownLatch(1);
