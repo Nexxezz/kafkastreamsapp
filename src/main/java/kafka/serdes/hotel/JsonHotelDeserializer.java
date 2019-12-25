@@ -30,8 +30,11 @@ public class JsonHotelDeserializer implements Deserializer<Hotel> {
 
         String[] arr = new String(bytes).split(",");
 
-        return new Hotel(Long.parseLong(arr[0]), arr[1], arr[2], arr[3], arr[4],
-                Double.valueOf(arr[5]), Double.valueOf(arr[6]), arr[7].substring(0, arr[7].length() - 2));
+        if (arr.length != 8)
+            return new Hotel();
+        else
+            return new Hotel(Long.parseLong(arr[0]), arr[1], arr[2], arr[3], arr[4],
+                    Double.valueOf(arr[5]), Double.valueOf(arr[6]), arr[7].substring(0, arr[7].length() - 2));
     }
 
     @Override
