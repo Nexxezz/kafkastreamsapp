@@ -38,14 +38,17 @@ public class Hotel {
 
     @Override
     public String toString() {
-        return id.toString() + COMMA_DELIMETER +
-                name + COMMA_DELIMETER +
-                country + COMMA_DELIMETER +
-                city + COMMA_DELIMETER +
-                address + COMMA_DELIMETER +
-                latitude.toString() + COMMA_DELIMETER +
-                longitude.toString() + COMMA_DELIMETER +
-                geoHash;
+        if (id == null)
+            return "";
+        else
+            return id.toString() + COMMA_DELIMETER +
+                    name + COMMA_DELIMETER +
+                    country + COMMA_DELIMETER +
+                    city + COMMA_DELIMETER +
+                    address + COMMA_DELIMETER +
+                    latitude.toString() + COMMA_DELIMETER +
+                    longitude.toString() + COMMA_DELIMETER +
+                    geoHash;
     }
 }
 
