@@ -22,6 +22,7 @@ public class JsonHotelSerializer implements Serializer<Hotel> {
             return null;
 
         try {
+            System.out.println(objectMapper.writeValueAsBytes(hotel));
             return objectMapper.writeValueAsBytes(hotel);
         } catch (Exception e) {
             throw new SerializationException("Error serializing JSON message", e);

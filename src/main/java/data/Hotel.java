@@ -12,7 +12,7 @@ import lombok.Setter;
 @NoArgsConstructor
 public class Hotel {
     @JsonProperty("id")
-    private Integer id;
+    private int id;
     @JsonProperty("name")
     private String name;
     @JsonProperty("country")
@@ -22,9 +22,9 @@ public class Hotel {
     @JsonProperty("address")
     private String address;
     @JsonProperty("latitude")
-    private Long latitude;
+    private String latitude;
     @JsonProperty("longitude")
-    private Long longitude;
+    private String longitude;
     @JsonProperty("geoHash")
     private String geoHash;
 }
