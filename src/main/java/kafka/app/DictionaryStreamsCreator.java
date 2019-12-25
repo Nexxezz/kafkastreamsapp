@@ -69,7 +69,7 @@ public class DictionaryStreamsCreator {
 
         final KafkaStreams streams = new KafkaStreams(builder.build(), props);
         final CountDownLatch latch = new CountDownLatch(1);
-        Runtime.getRuntime().addShutdownHook(new Thread("streams-hook-thread") {
+        Runtime.getRuntime().addShutdownHook(new Thread("streams-hook") {
             @Override
             public void run() {
                 streams.close();

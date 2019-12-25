@@ -26,10 +26,10 @@ public class Hotel {
     private String address;
 
     @JsonProperty("latitude")
-    private String latitude;
+    private Double latitude;
 
     @JsonProperty("longitude")
-    private String longitude;
+    private Double longitude;
 
     @JsonProperty("geoHash")
     private String geoHash;
