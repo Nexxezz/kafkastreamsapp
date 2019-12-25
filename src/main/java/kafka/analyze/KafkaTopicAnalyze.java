@@ -27,7 +27,7 @@ public class KafkaTopicAnalyze {
 
     public static void main(String[] args) {
         String topic = args[0];
-        LOG.info("STARTED for topic={}, first {} messages will be picked up", topic);
+        LOG.info("STARTED for topic={}, first {} messages will be picked up", topic, LOG_LINES_LIMIT);
 
         final StreamsBuilder builder = new StreamsBuilder();
         final KStream<byte[], byte[]> weather = builder.stream(topic);
