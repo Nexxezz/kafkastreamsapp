@@ -1,7 +1,5 @@
-package kafka.app;
+package kafka.app.evgenii;
 
-import kafka.serdes.NullDeser;
-import kafka.serdes.NullSer;
 import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.KafkaStreams;
