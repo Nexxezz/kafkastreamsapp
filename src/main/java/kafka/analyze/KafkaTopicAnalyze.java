@@ -13,6 +13,12 @@ import java.util.Properties;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 
+/**
+ * Usage example:
+ * mvn clean test assembly:single
+ * docker cp target/kafkastreamsapp-1.0-SNAPSHOT-jar-with-dependencies.jar sandbox-hdp:/home/kafka-app
+ * java -cp kafkastreamsapp-1.0-SNAPSHOT-jar-with-dependencies.jar kafka.analyze.KafkaTopicAnalyze hotels-data
+ */
 public class KafkaTopicAnalyze {
 
     public static final Logger LOG = LoggerFactory.getLogger(KafkaTopicAnalyze.class);
