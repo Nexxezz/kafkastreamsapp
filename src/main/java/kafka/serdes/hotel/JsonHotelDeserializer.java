@@ -33,7 +33,8 @@ public class JsonHotelDeserializer implements Deserializer<Hotel> {
         try {
             String[] message = new String(bytes).split(",");
 
-            Hotel hotel = new Hotel(Long.parseLong(message[0]),message[1],message[2],message[3],message[4],message[5],message[6],message[7]);
+            Hotel hotel = new Hotel(Long.parseLong(message[0]), message[1], message[2], message[3], message[4],
+                    message[5], message[6], message[7].substring(0,message[7].length()-2));
             return hotel;
         } catch (Exception e) {
             throw new SerializationException(e);
