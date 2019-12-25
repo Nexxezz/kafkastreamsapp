@@ -1,4 +1,4 @@
-package data;
+package kafka.data;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;

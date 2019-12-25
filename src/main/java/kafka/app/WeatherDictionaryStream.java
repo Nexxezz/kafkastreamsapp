@@ -1,4 +1,12 @@
+package kafka.app;
+
 import ch.hsr.geohash.GeoHash;
+import kafka.data.Hotel;
+import kafka.data.Weather;
+import kafka.serdes.hotel.JsonHotelDeserializer;
+import kafka.serdes.hotel.JsonHotelSerializer;
+import kafka.serdes.weather.JsonWeatherDeserializer;
+import kafka.serdes.weather.JsonWeatherSerializer;
 import org.apache.kafka.common.serialization.Deserializer;
 import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.common.serialization.Serdes;
@@ -9,16 +17,9 @@ import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.kstream.Consumed;
 import org.apache.kafka.streams.kstream.KStream;
 import org.apache.kafka.streams.kstream.Produced;
-import utils.serdes.hotel.JsonHotelDeserializer;
-import utils.serdes.hotel.JsonHotelSerializer;
-import utils.serdes.weather.JsonWeatherDeserializer;
-import utils.serdes.weather.JsonWeatherSerializer;
 
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
-
-import data.Hotel;
-import data.Weather;
 
 
 public class WeatherDictionaryStream {

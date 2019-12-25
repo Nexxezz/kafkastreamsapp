@@ -1,30 +1,35 @@
-package utils.serdes.weather;
+package kafka.serdes.hotel;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import kafka.data.Hotel;
 import org.apache.kafka.common.errors.SerializationException;
 import org.apache.kafka.common.serialization.Deserializer;
 
 import java.util.Map;
-import data.Weather;
-public class JsonWeatherDeserializer implements Deserializer<Weather> {
+
+public class JsonHotelDeserializer implements Deserializer<Hotel> {
+
     private ObjectMapper objectMapper = new ObjectMapper();
 
 
-    public JsonWeatherDeserializer() {
+    /**
+     * Default constructor needed by Kafka
+     */
+    public JsonHotelDeserializer() {
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public void configure(Map<String, ?> props, boolean isKey) {
-
     }
 
     @Override
-    public Weather deserialize(String topic, byte[] bytes) {
+    public Hotel deserialize(String topic, byte[] bytes) {
         if (bytes == null)
             return null;
 
         try {
-            return objectMapper.treeToValue(objectMapper.readTree(bytes),Weather.class);
+            return objectMapper.treeToValue(objectMapper.readTree(bytes), Hotel.class);
         } catch (Exception e) {
             throw new SerializationException(e);
         }

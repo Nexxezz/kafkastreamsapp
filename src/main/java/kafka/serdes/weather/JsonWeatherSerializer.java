@@ -1,15 +1,16 @@
-package utils.serdes.hotel;
+package kafka.serdes.weather;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import kafka.data.Weather;
 import org.apache.kafka.common.errors.SerializationException;
 import org.apache.kafka.common.serialization.Serializer;
 
 import java.util.Map;
-import data.Hotel;
-public class JsonHotelSerializer implements Serializer<Hotel> {
+
+public class JsonWeatherSerializer implements Serializer<Weather> {
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    public JsonHotelSerializer() {
+    public JsonWeatherSerializer() {
     }
 
     @Override
@@ -17,13 +18,12 @@ public class JsonHotelSerializer implements Serializer<Hotel> {
     }
 
     @Override
-    public byte[] serialize(String topic, Hotel hotel) {
-        if (hotel == null)
+    public byte[] serialize(String topic, Weather weather) {
+        if (weather == null)
             return null;
 
         try {
-            System.out.println(objectMapper.writeValueAsBytes(hotel));
-            return objectMapper.writeValueAsBytes(hotel);
+            return objectMapper.writeValueAsBytes(weather);
         } catch (Exception e) {
             throw new SerializationException("Error serializing JSON message", e);
         }
