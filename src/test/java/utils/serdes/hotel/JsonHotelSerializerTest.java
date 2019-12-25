@@ -10,10 +10,10 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class JsonHotelSerializerTest {
 
-    private static final Hotel testHotel = new Hotel(23L, "name", "country",
-            "city", "address", 5.0, 6.0, "geoHash");
+    private static final Hotel testHotel = new Hotel(4L, "Best Western Holiday Hills", "US",
+            "Coalville", "500 W 120 S", 40.91089, -111.40339, "9x2b8");
 
-    public static final String testHotelAsString = "23,name,country,city,address,5.0,6.0,geoHash";
+    public static final String testHotelAsString = "4,Best Western Holiday Hills,US,Coalville,500 W 120 S,40.91089,-111.40339,9x2b8";
 
     @Test
     void serialize() {
