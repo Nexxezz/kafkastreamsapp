@@ -29,7 +29,8 @@ public class JsonHotelDeserializer implements Deserializer<Hotel> {
             return null;
 
         try {
-            return objectMapper.treeToValue(objectMapper.readTree(bytes), Hotel.class);
+            byte[] message = new String(bytes).split(",").toString().getBytes();
+            return objectMapper.treeToValue(objectMapper.readTree(message), Hotel.class);
         } catch (Exception e) {
             throw new SerializationException(e);
         }
