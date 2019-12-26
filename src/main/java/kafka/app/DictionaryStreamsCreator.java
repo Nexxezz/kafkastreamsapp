@@ -2,19 +2,21 @@ package kafka.app;
 
 import ch.hsr.geohash.GeoHash;
 import kafka.data.Hotel;
+import kafka.data.HotelWeather;
 import kafka.data.Weather;
 import kafka.serdes.hotel.JsonHotelDeserializer;
 import kafka.serdes.hotel.JsonHotelSerializer;
+import kafka.serdes.hotelweather.HotelWeatherDeserializer;
+import kafka.serdes.hotelweather.HotelWeatherSerializer;
 import kafka.serdes.weather.JsonWeatherDeserializer;
 import kafka.serdes.weather.JsonWeatherSerializer;
 import org.apache.kafka.common.serialization.Deserializer;
 import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.common.serialization.Serializer;
-import org.apache.kafka.streams.Consumed;
-import org.apache.kafka.streams.KafkaStreams;
-import org.apache.kafka.streams.StreamsBuilder;
-import org.apache.kafka.streams.StreamsConfig;
+import org.apache.kafka.streams.*;
+import org.apache.kafka.streams.kstream.JoinWindows;
+import org.apache.kafka.streams.kstream.Joined;
 import org.apache.kafka.streams.kstream.KStream;
 import org.apache.kafka.streams.kstream.Produced;
 
@@ -23,6 +25,7 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 
 public class DictionaryStreamsCreator {
@@ -37,34 +40,48 @@ public class DictionaryStreamsCreator {
 
         final Serializer<Weather> weatherSerializer = new JsonWeatherSerializer();
         serdeProps.put("weatherSer", Weather.class);
-        weatherSerializer.configure(serdeProps, false);
 
         final Deserializer<Weather> weatherDeserializer = new JsonWeatherDeserializer();
         serdeProps.put("weatherDe", Weather.class);
-        weatherDeserializer.configure(serdeProps, false);
 
         final Serializer<Hotel> hotelSerializer = new JsonHotelSerializer();
         serdeProps.put("hotelSer", Hotel.class);
-        hotelSerializer.configure(serdeProps, false);
 
         final Deserializer<Hotel> hotelDeserializer = new JsonHotelDeserializer();
         serdeProps.put("hotelDe", Hotel.class);
-        hotelDeserializer.configure(serdeProps, false);
+
+
+        final Serializer<HotelWeather> hotelWeatherSerializer = new HotelWeatherSerializer();
+        serdeProps.put("hotelWeatherSer", HotelWeather.class);
+
+        final Deserializer<HotelWeather> hotelWeatherDeserializer = new HotelWeatherDeserializer();
+        serdeProps.put("hotelWeatherDe", HotelWeather.class);
 
         final Serde<Weather> weatherSerde = Serdes.serdeFrom(weatherSerializer, weatherDeserializer);
         final Serde<Hotel> hotelSerde = Serdes.serdeFrom(hotelSerializer, hotelDeserializer);
-
+        final Serde<HotelWeather> hotelWeatherSerde = Serdes.serdeFrom(hotelWeatherSerializer, hotelWeatherDeserializer);
 
         StreamsBuilder builder = new StreamsBuilder();
 
-        KStream<String, Weather> weatherInput = builder.stream("weather-topic", Consumed.with(Serdes.String(), weatherSerde));
-        weatherInput.mapValues(msg -> {
-            msg.setGeoHash(GeoHash.geoHashStringWithCharacterPrecision(msg.getLat(), msg.getLng(), 5));
-            return msg;
-        }).to("weather-dictionary-topic", Produced.with(Serdes.String(), weatherSerde));
+        KStream<String, Weather> weatherInput = builder
+                .stream("weather-topic", Consumed.with(Serdes.String(), weatherSerde))
+                .mapValues(value -> {
+                    value.setGeoHash(GeoHash.geoHashStringWithCharacterPrecision(value.getLat(), value.getLng(), 5));
+                    return value;
+                })
+                .map((key, value) -> KeyValue.pair(value.getGeoHash(), value));
 
-        KStream<String, Hotel> source = builder.stream("hotels-topic", Consumed.with(Serdes.String(), hotelSerde));
-        source.to("hotels-dictionary-topic", Produced.with(Serdes.String(), hotelSerde));
+        KStream<String, Hotel> hotelInput = builder
+                .stream("hotels-topic", Consumed.with(Serdes.String(), hotelSerde))
+                .map((key, value) -> KeyValue.pair(value.getGeoHash(), value));
+        KStream<String, HotelWeather> hotelsWeather = hotelInput.join(weatherInput, ((hotel, weather) ->
+                        new HotelWeather(hotel.getId(), hotel.getName(), weather.getAverageTemperatureCelsius(),
+                                weather.getAverageTemperatureFahrenheit(), weather.getDate())),
+                JoinWindows.of(TimeUnit.MINUTES.toMillis(1)),
+                Joined.with(Serdes.String(),
+                        hotelSerde,
+                        weatherSerde));
+        hotelsWeather.to("hotel-weather-topic",Produced.with(Serdes.String(),hotelWeatherSerde));
 
         final KafkaStreams streams = new KafkaStreams(builder.build(), props);
         final CountDownLatch latch = new CountDownLatch(1);
