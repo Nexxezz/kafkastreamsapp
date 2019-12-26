@@ -26,7 +26,11 @@ import java.util.concurrent.TimeUnit;
 
 import static ch.hsr.geohash.GeoHash.geoHashStringWithCharacterPrecision;
 
-
+/***
+ *  Class  for creating Hotels and Weather streams from Kafka topics.
+ *  Third stream created as the result of join operation on geohash between Hotels and Weather streams.
+ *  All classes uses custom value serde.
+ */
 public class DictionaryStreamsCreator {
 
 

@@ -12,7 +12,12 @@ public class HotelWeatherDeserializer implements Deserializer<HotelWeather> {
     public void configure(Map<String, ?> configs, boolean isKey) {
 
     }
-
+    /***
+     * Method for HotelWeather object deserialization
+     * @param topic  Kafka topic name
+     * @param data  serialized HotelWeather class for deserialization
+     * @return HotelWeather object
+     */
     @Override
     public HotelWeather deserialize(String topic, byte[] data) {
         return HotelWeather.ofString(new String(data));

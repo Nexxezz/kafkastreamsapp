@@ -23,6 +23,12 @@ public class JsonHotelDeserializer implements Deserializer<Hotel> {
     public void configure(Map<String, ?> props, boolean isKey) {
     }
 
+    /***
+     * Method for  Hotel object deserialization
+     * @param topic  Kafka topic name
+     * @param bytes   serialized Hotel object for deserialization
+     * @return Hotel object
+     */
     @Override
     public Hotel deserialize(String topic, byte[] bytes) {
         if (bytes == null)

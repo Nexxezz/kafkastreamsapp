@@ -17,6 +17,12 @@ public class JsonWeatherSerializer implements Serializer<Weather> {
     public void configure(Map<String, ?> props, boolean isKey) {
     }
 
+    /***
+     * Method for Weather object serialization
+     * @param topic  Kafka topic name
+     * @param weather  Weather object for serialization
+     * @return byte array that represents Weather object
+     */
     @Override
     public byte[] serialize(String topic, Weather weather) {
         if (weather == null)

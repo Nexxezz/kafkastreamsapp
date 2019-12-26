@@ -12,6 +12,12 @@ public class HotelWeatherSerializer implements Serializer<HotelWeather> {
 
     }
 
+    /***
+     * Method for HotelWeather object serialization
+     * @param topic Kafka topic name
+     * @param hotelWeather HotelWeather object for serialization
+     * @return byte array that represents HotelWeather object
+     */
     @Override
     public byte[] serialize(String topic, HotelWeather hotelWeather) {
         return hotelWeather.toString().getBytes();

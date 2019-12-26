@@ -20,6 +20,12 @@ public class JsonWeatherDeserializer implements Deserializer<Weather> {
 
     }
 
+    /***
+     * Method for Weather object deserialization
+     * @param topic  Kafka topic name
+     * @param bytes  serialized Weather class for deserialization
+     * @return Weather object
+     */
     @Override
     public Weather deserialize(String topic, byte[] bytes) {
         if (bytes == null)
