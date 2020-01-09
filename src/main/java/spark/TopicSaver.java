@@ -16,6 +16,7 @@ public class TopicSaver {
                 .option("kafka.bootstrap.servers", "sandbox-hdp.hortonworks.com:6667")
                 .option("subscribe", TOPIC_NAME)
                 .load();
+        df.printSchema();
         df.write().parquet(HDFS_PATH);
     }
 }
