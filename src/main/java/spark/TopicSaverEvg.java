@@ -27,5 +27,7 @@ public class TopicSaverEvg {
         hotelWeatherDataset.printSchema();
         System.out.println(hotelWeatherDataset.count());
         hotelWeatherDataset.write().parquet(DEFAULT_HDFS_OUTPUT_PATH);
+
+        spark.close();
     }
 }
