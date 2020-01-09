@@ -25,6 +25,7 @@ public class TopicSaverEvg {
         Encoder<HotelWeather> encoder = Encoders.bean(HotelWeather.class);
         Dataset<HotelWeather> hotelWeatherDataset = ds.as(encoder);
         hotelWeatherDataset.printSchema();
+        System.out.println(hotelWeatherDataset.count());
         hotelWeatherDataset.write().parquet(DEFAULT_HDFS_OUTPUT_PATH);
     }
 }
