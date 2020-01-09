@@ -1,7 +1,10 @@
 package spark;
 
 import kafka.data.HotelWeather;
-import org.apache.spark.sql.*;
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Encoders;
+import org.apache.spark.sql.Row;
+import org.apache.spark.sql.SparkSession;
 
 public class TopicSaverEvg {
 
@@ -22,8 +25,7 @@ public class TopicSaverEvg {
                 .option("subscribe", DEFAULT_TOPIC_NAME)
                 .load();
 
-        Encoder<HotelWeather> encoder = Encoders.bean(HotelWeather.class);
-        Dataset<HotelWeather> hotelWeatherDataset = ds.as(encoder);
+        Dataset<HotelWeather> hotelWeatherDataset = ds.as(Encoders.bean(HotelWeather.class));
         hotelWeatherDataset.printSchema();
         System.out.println(hotelWeatherDataset.count());
         hotelWeatherDataset.write().parquet(DEFAULT_HDFS_OUTPUT_PATH);
