@@ -10,9 +10,11 @@ public class TopicSaver {
     public static String CHECKPOINT_PATH = "hdfs://sandbox-hdp.hortonworks.com:8020/tmp/spark_checkpoints";
 
     public static void main(String[] args) {
+        SparkSession.clearActiveSession();
+        SparkSession.clearDefaultSession();
         SparkSession spark = SparkSession.builder()
                 .master("local[*]")
-                .appName("Application").getOrCreate();
+                .appName("Applicatio1").getOrCreate();
 
         Dataset<Row> df = spark
                 .readStream()
