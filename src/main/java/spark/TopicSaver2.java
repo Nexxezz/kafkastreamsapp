@@ -94,6 +94,8 @@ public class TopicSaver2 {
         JavaSparkContext sparkContext = new JavaSparkContext(spark.sparkContext());
         JavaRDD<String> rdd = sparkContext.parallelize(buff);
 
+        if (rdd.isEmpty()) throw new RuntimeException("No records in RDD");
+
         Dataset<Row> ds = spark.read().json(rdd);
         ds.show();
         ds.write().parquet(path);
