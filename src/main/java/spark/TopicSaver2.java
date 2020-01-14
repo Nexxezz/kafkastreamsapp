@@ -88,7 +88,7 @@ public class TopicSaver2 {
     protected static void saveToHdfs(List<String> buff, String path) {
         SparkSession spark = SparkSession.builder()
                 .master("local[*]") //.master("yarn")
-                .appName("topic2-saver-app")
+                .appName(UUID.randomUUID().toString())
                 .getOrCreate();
 
         JavaSparkContext sparkContext = new JavaSparkContext(spark.sparkContext());

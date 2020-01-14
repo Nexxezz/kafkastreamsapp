@@ -17,11 +17,11 @@
         <appender-ref ref="CONSOLE"/>
     </logger>
 
-    <logger name="spark" level="debug" additivity="false">
+    <logger name="spark" level="info" additivity="false">
         <appender-ref ref="CONSOLE"/>
     </logger>
 
-    <logger name="org.apache.spark" level="warn" additivity="false">
+    <logger name="org.apache.spark" level="info" additivity="false">
         <appender-ref ref="CONSOLE"/>
     </logger>
 

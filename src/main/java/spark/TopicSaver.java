@@ -10,7 +10,7 @@ public class TopicSaver {
 
     public static Logger LOG = LoggerFactory.getLogger(TopicSaver.class.getName());
 
-    public static final String TOPIC_NAME = "hotels-topic";
+    public static final String TOPIC_NAME = "weather-topic";
     public static final String HDFS_PATH = "hdfs://sandbox-hdp.hortonworks.com:8020/tmp/test";
     public static final String CHECKPOINT_PATH = "hdfs://sandbox-hdp.hortonworks.com:8020/tmp/spark_checkpoints";
 
