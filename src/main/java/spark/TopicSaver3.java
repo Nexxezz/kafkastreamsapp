@@ -23,13 +23,13 @@ import java.util.UUID;
 
 public class TopicSaver3 {
 
-    public final static Logger LOG = LoggerFactory.getLogger(TopicSaver3.class.getName())
+    public final static Logger LOG = LoggerFactory.getLogger(TopicSaver3.class.getName());
     public static final String TOPIC_NAME = "join-result-topic";
     public static final String HDFS_PATH = "hdfs://sandbox-hdp.hortonworks.com:8020/tmp/topicSaverResult";
     public static final int RECORDS_LIMIT = 50;
-    final Serializer<HotelWeather> hotelWeatherSerializer = new HotelWeatherSerializer();
-    final Deserializer<HotelWeather> hotelWeatherDeserializer = new HotelWeatherDeserializer();
-    final Serde<HotelWeather> hotelWeatherSerde = Serdes.serdeFrom(hotelWeatherSerializer, hotelWeatherDeserializer);
+    final static Serializer<HotelWeather> hotelWeatherSerializer = new HotelWeatherSerializer();
+    final static  Deserializer<HotelWeather> hotelWeatherDeserializer = new HotelWeatherDeserializer();
+    final static Serde<HotelWeather> hotelWeatherSerde = Serdes.serdeFrom(hotelWeatherSerializer, hotelWeatherDeserializer);
 
     public static void main(String[] args) {
         Properties props = new Properties();
@@ -50,7 +50,7 @@ public class TopicSaver3 {
             limit = Integer.parseInt(args[2]);
         }
 
-        KafkaConsumer<String, HotelWeather> consumer = new KafkaConsumer(props, hotelWeatherDeserializer, hotelWeatherDeserializer);
+        KafkaConsumer<String, HotelWeather> consumer = new KafkaConsumer(props);
         consumer.subscribe(Arrays.asList(topic));
         ConsumerRecords<String, HotelWeather> records = consumer.poll(100);
         for (ConsumerRecord<String, HotelWeather> record : records)
