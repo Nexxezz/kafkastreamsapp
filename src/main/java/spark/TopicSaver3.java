@@ -29,7 +29,7 @@ public class TopicSaver3 {
         props.put("auto.commit.interval.ms", "1000");
         props.put("session.timeout.ms", "30000");
         props.put("key.deserializer", "org.apache.kafka.common.serialization.StringDeserializer");
-        props.put("value.deserializer", HotelWeatherDeserializer.class);
+        props.put("value.deserializer", HotelWeatherDeserializer.class.getName());
 
         String topic;
         String path;
