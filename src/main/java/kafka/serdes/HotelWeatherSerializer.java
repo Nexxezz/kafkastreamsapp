@@ -20,6 +20,9 @@ public class HotelWeatherSerializer implements Serializer<HotelWeather> {
      */
     @Override
     public byte[] serialize(String topic, HotelWeather hotelWeather) {
+        if (hotelWeather == null) {
+            return null;
+        }
         return hotelWeather.toString().getBytes();
     }
 
