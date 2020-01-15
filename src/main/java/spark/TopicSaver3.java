@@ -47,7 +47,6 @@ public class TopicSaver3 {
         LOG.info("Starting TopicSaver3 with parameters: topic={}, path={}, limit={}, groupId={}",
                 topic, path, limit, groupId);
 
-
         final KafkaConsumer<byte[], Weather> consumer = getConsumer(getProps(groupId), topic);
         SparkSession ss = initSpark();
 
@@ -57,7 +56,6 @@ public class TopicSaver3 {
 
             while (!isTopicEmpty) {
                 final ConsumerRecords<byte[], Weather> consumerRecords = consumer.poll(10000);
-
                 if (consumerRecords.count() == 0) {
                     LOG.debug("no more messages in the topic, messages read total={}", totalRead);
                     isTopicEmpty = true;
@@ -65,14 +63,11 @@ public class TopicSaver3 {
                     if (LOG.isDebugEnabled()) {
                         consumerRecords.forEach(record -> LOG.debug("key={}, value={}", record.key(), record.value()));
                     }
-
                     List<Weather> filteredRecords = createStream(consumerRecords.iterator())
                             .map(ConsumerRecord::value)
                             .filter(Objects::nonNull)
                             .collect(Collectors.toList());
-
                     saveToHdfsBySpark(filteredRecords, ss, path);
-
                     totalRead += consumerRecords.count();
                     consumer.commitAsync();
                 }
@@ -82,7 +77,6 @@ public class TopicSaver3 {
             consumer.close();
             ss.stop();
         }
-
         LOG.info("END");
     }
 
@@ -90,7 +84,6 @@ public class TopicSaver3 {
                                           SparkSession ss,
                                           String path) {
         JavaSparkContext sparkContext = new JavaSparkContext(ss.sparkContext());
-
         JavaRDD<Weather> rdd = sparkContext.parallelize(records);
         Dataset<Row> df = ss.createDataFrame(rdd, Weather.class);
         df.write().mode(SaveMode.Append).parquet(path);
@@ -122,15 +115,14 @@ public class TopicSaver3 {
         props.put("max.poll.records", 1000);
         props.put("key.deserializer", "org.apache.kafka.common.serialization.ByteArrayDeserializer");
         props.put("value.deserializer", "kafka.serdes.weather.JsonWeatherDeserializer");
+//        props.put("enable.auto.commit", "true");
+//        props.put("auto.commit.interval.ms", "1000");
+//        props.put("session.timeout.ms", "30000");
 
         //not a good idea, see
         //https://stackoverflow.com/questions/28561147/how-to-read-data-using-kafka-consumer-api-from-beginning
         props.put(ConsumerConfig.CLIENT_ID_CONFIG, "topic-saver3-id");
         props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
-
-//        props.put("enable.auto.commit", "true");
-//        props.put("auto.commit.interval.ms", "1000");
-//        props.put("session.timeout.ms", "30000");
         return props;
     }
 
