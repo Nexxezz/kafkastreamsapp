@@ -5,12 +5,14 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.io.Serializable;
+
 @Getter
 @Setter
 @AllArgsConstructor
 //@NoArgsConstructor
 @EqualsAndHashCode
-public class HotelWeather {
+public class HotelWeather implements Serializable {
 
     private static String COMMA = ",";
 

@@ -1,5 +1,6 @@
 package spark;
 
+import kafka.data.HotelWeather;
 import kafka.data.Weather;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
@@ -48,7 +49,7 @@ public class TopicSaver3 {
                 topic, path, limit, groupId);
 
 
-        final KafkaConsumer<byte[], Weather> consumer = getConsumer(getProps(groupId), topic);
+        final KafkaConsumer<byte[], HotelWeather> consumer = getConsumer(getProps(groupId), topic);
         SparkSession ss = initSpark();
 
         try {
@@ -56,7 +57,7 @@ public class TopicSaver3 {
             boolean isTopicEmpty = false;
 
             while (!isTopicEmpty) {
-                final ConsumerRecords<byte[], Weather> consumerRecords = consumer.poll(10000);
+                final ConsumerRecords<byte[], HotelWeather> consumerRecords = consumer.poll(10000);
 
                 if (consumerRecords.count() == 0) {
                     LOG.debug("no more messages in the topic, messages read total={}", totalRead);
@@ -66,7 +67,7 @@ public class TopicSaver3 {
                         consumerRecords.forEach(record -> LOG.debug("key={}, value={}", record.key(), record.value()));
                     }
 
-                    List<Weather> filteredRecords = createStream(consumerRecords.iterator())
+                    List<HotelWeather> filteredRecords = createStream(consumerRecords.iterator())
                             .map(ConsumerRecord::value)
                             .filter(Objects::nonNull)
                             .collect(Collectors.toList());
@@ -86,12 +87,12 @@ public class TopicSaver3 {
         LOG.info("END");
     }
 
-    private static void saveToHdfsBySpark(List<Weather> records,
+    private static void saveToHdfsBySpark(List<HotelWeather> records,
                                           SparkSession ss,
                                           String path) {
         JavaSparkContext sparkContext = new JavaSparkContext(ss.sparkContext());
 
-        JavaRDD<Weather> rdd = sparkContext.parallelize(records);
+        JavaRDD<HotelWeather> rdd = sparkContext.parallelize(records);
         Dataset<Row> df = ss.createDataFrame(rdd, Weather.class);
         df.write().mode(SaveMode.Append).parquet(path);
     }
@@ -103,8 +104,8 @@ public class TopicSaver3 {
                 .getOrCreate();
     }
 
-    private static KafkaConsumer<byte[], Weather> getConsumer(Properties props, String topic) {
-        KafkaConsumer<byte[], Weather> consumer = new KafkaConsumer<>(props);
+    private static KafkaConsumer<byte[], HotelWeather> getConsumer(Properties props, String topic) {
+        KafkaConsumer<byte[], HotelWeather> consumer = new KafkaConsumer<>(props);
         consumer.subscribe(Collections.singletonList(topic));
         return consumer;
     }
@@ -121,7 +122,7 @@ public class TopicSaver3 {
         props.put("bootstrap.servers", "sandbox-hdp.hortonworks.com:6667");
         props.put("max.poll.records", 1000);
         props.put("key.deserializer", "org.apache.kafka.common.serialization.ByteArrayDeserializer");
-        props.put("value.deserializer", "kafka.serdes.weather.JsonWeatherDeserializer");
+        props.put("value.deserializer", "kafka.serdes.weather.HotelWeatherDeserializer");
 
         //not a good idea, see
         //https://stackoverflow.com/questions/28561147/how-to-read-data-using-kafka-consumer-api-from-beginning
