@@ -94,7 +94,7 @@ public class TopicSaver3 {
 
         JavaRDD<HotelWeather> rdd = sparkContext.parallelize(records);
         Dataset<Row> df = ss.createDataFrame(rdd, Weather.class);
-        df.write().mode(SaveMode.Overwrite).parquet(path);
+        df.write().mode(SaveMode.Append).parquet(path);
     }
 
     private static SparkSession initSpark() {
@@ -122,7 +122,7 @@ public class TopicSaver3 {
         props.put("bootstrap.servers", "sandbox-hdp.hortonworks.com:6667");
         props.put("max.poll.records", 1000);
         props.put("key.deserializer", "org.apache.kafka.common.serialization.ByteArrayDeserializer");
-        props.put("value.deserializer", "kafka.serdes.weather.HotelWeatherDeserializer");
+        props.put("value.deserializer", "kafka.serdes.HotelWeatherDeserializer");
 
         //not a good idea, see
         //https://stackoverflow.com/questions/28561147/how-to-read-data-using-kafka-consumer-api-from-beginning
