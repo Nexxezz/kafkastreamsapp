@@ -94,7 +94,7 @@ public class TopicSaver3 {
 
         JavaRDD<HotelWeather> rdd = sparkContext.parallelize(records);
         Dataset<Row> df = ss.createDataFrame(rdd, Weather.class);
-        df.write().mode(SaveMode.Append).parquet(path);
+        df.write().mode(SaveMode.Overwrite).parquet(path);
     }
 
     private static SparkSession initSpark() {
