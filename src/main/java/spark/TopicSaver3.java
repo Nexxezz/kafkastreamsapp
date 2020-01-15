@@ -66,9 +66,9 @@ public class TopicSaver3 {
                         consumerRecords.forEach(record -> LOG.debug("key={}, value={}", record.key(), record.value()));
                     }
 
-                    List<ConsumerRecord<byte[], Weather>> filteredRecords = createStream(consumerRecords.iterator())
-                            .filter(r -> r.key() != null)
-                            .filter(r -> r.value() != null)
+                    List<Weather> filteredRecords = createStream(consumerRecords.iterator())
+                            .map(ConsumerRecord::value)
+                            .filter(Objects::nonNull)
                             .collect(Collectors.toList());
 
                     saveToHdfsBySpark(filteredRecords, ss, path);
@@ -86,12 +86,12 @@ public class TopicSaver3 {
         LOG.info("END");
     }
 
-    private static void saveToHdfsBySpark(List<ConsumerRecord<byte[], Weather>> records,
+    private static void saveToHdfsBySpark(List<Weather> records,
                                           SparkSession ss,
                                           String path) {
         JavaSparkContext sparkContext = new JavaSparkContext(ss.sparkContext());
 
-        JavaRDD<ConsumerRecord<byte[], Weather>> rdd = sparkContext.parallelize(records);
+        JavaRDD<Weather> rdd = sparkContext.parallelize(records);
         Dataset<Row> df = ss.createDataFrame(rdd, Weather.class);
         df.write().mode(SaveMode.Append).parquet(path);
     }
