@@ -27,6 +27,10 @@ public class TopicSaver3 {
     public static final String HDFS_PATH = "hdfs://sandbox-hdp.hortonworks.com:8020/tmp/topicSaverResult";
     public static final int RECORDS_LIMIT = 1000;
 
+    private static final int KAFKA_MAX_POLL_RECORDS = 1000;
+    private static final int KAFKA_POLL_TIMEOUT_MS = 10000;
+    private static final int SPARK_RECORDS_IN_FILE = 100_000;
+
     public static void main(String[] args) {
         String topic;
         String path;
@@ -50,12 +54,15 @@ public class TopicSaver3 {
         final KafkaConsumer<byte[], Weather> consumer = getConsumer(getProps(groupId), topic);
         SparkSession ss = initSpark();
 
+        ArrayList<Weather> buffer = new ArrayList<>(SPARK_RECORDS_IN_FILE);
+
         try {
             int totalRead = 0;
             boolean isTopicEmpty = false;
 
             while (!isTopicEmpty) {
-                final ConsumerRecords<byte[], Weather> consumerRecords = consumer.poll(10000);
+                List<Weather> records = List.of();
+                final ConsumerRecords<byte[], Weather> consumerRecords = consumer.poll(KAFKA_POLL_TIMEOUT_MS);
                 if (consumerRecords.count() == 0) {
                     LOG.debug("no more messages in the topic, messages read total={}", totalRead);
                     isTopicEmpty = true;
@@ -63,14 +70,14 @@ public class TopicSaver3 {
                     if (LOG.isDebugEnabled()) {
                         consumerRecords.forEach(record -> LOG.debug("key={}, value={}", record.key(), record.value()));
                     }
-                    List<Weather> filteredRecords = createStream(consumerRecords.iterator())
+                    records = createStream(consumerRecords.iterator())
                             .map(ConsumerRecord::value)
                             .filter(Objects::nonNull)
                             .collect(Collectors.toList());
-                    saveToHdfsBySpark(filteredRecords, ss, path);
                     totalRead += consumerRecords.count();
                     consumer.commitAsync();
                 }
+                saveToHdfs(records, isTopicEmpty, ss, path);
             }
         } finally {
             LOG.debug("final section of try");
@@ -78,6 +85,11 @@ public class TopicSaver3 {
             ss.stop();
         }
         LOG.info("END");
+    }
+
+
+    private static void saveToHdfs(List<Weather> records, boolean isTopicEmpty, SparkSession ss, String path) {
+
     }
 
     private static void saveToHdfsBySpark(List<Weather> records,
@@ -112,7 +124,7 @@ public class TopicSaver3 {
         Properties props = new Properties();
         props.put("group.id", groupId);
         props.put("bootstrap.servers", "sandbox-hdp.hortonworks.com:6667");
-        props.put("max.poll.records", 1000);
+        props.put("max.poll.records", KAFKA_MAX_POLL_RECORDS);
         props.put("key.deserializer", "org.apache.kafka.common.serialization.ByteArrayDeserializer");
         props.put("value.deserializer", "kafka.serdes.weather.JsonWeatherDeserializer");
 //        props.put("enable.auto.commit", "true");
