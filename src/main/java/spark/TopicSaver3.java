@@ -2,14 +2,22 @@ package spark;
 
 import kafka.data.Weather;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
+import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
+import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.api.java.JavaSparkContext;
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
+import org.apache.spark.sql.SaveMode;
+import org.apache.spark.sql.SparkSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Collections;
-import java.util.Properties;
-import java.util.UUID;
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 public class TopicSaver3 {
 
@@ -41,39 +49,58 @@ public class TopicSaver3 {
 
 
         final KafkaConsumer<byte[], Weather> consumer = getConsumer(getProps(groupId), topic);
+        SparkSession ss = initSpark();
 
         try {
-            int attemptsLeft = 5;
-            int readCount = 0;
-            //todo create buffer
+            int totalRead = 0;
+            boolean isTopicEmpty = false;
 
-            while (true) {
-                final ConsumerRecords<byte[], Weather> consumerRecords = consumer.poll(5000);
+            while (!isTopicEmpty) {
+                final ConsumerRecords<byte[], Weather> consumerRecords = consumer.poll(10000);
 
                 if (consumerRecords.count() == 0) {
-                    LOG.debug("no more messages in the topic, messages read total={}", readCount);
-                    break;
+                    LOG.debug("no more messages in the topic, messages read total={}", totalRead);
+                    isTopicEmpty = true;
+                } else {
+                    if (LOG.isDebugEnabled()) {
+                        consumerRecords.forEach(record -> LOG.debug("key={}, value={}", record.key(), record.value()));
+                    }
+
+                    List<ConsumerRecord<byte[], Weather>> filteredRecords = createStream(consumerRecords.iterator())
+                            .filter(r -> r.key() != null)
+                            .filter(r -> r.value() != null)
+                            .collect(Collectors.toList());
+
+                    saveToHdfsBySpark(filteredRecords, ss, path);
+
+                    totalRead += consumerRecords.count();
+                    consumer.commitAsync();
                 }
-
-                consumerRecords.forEach(record -> {
-                    LOG.debug("key={}, value={}", record.key(), record.value());
-                    //todo add records to buffer
-                });
-
-                readCount += consumerRecords.count();
-                consumer.commitAsync();
             }
-            attemptsLeft--;
-            LOG.debug("attempts left={}", attemptsLeft);
-
-            //todo pass buffer to spark
-
         } finally {
-            consumer.close();
             LOG.debug("final section of try");
+            consumer.close();
+            ss.stop();
         }
 
         LOG.info("END");
+    }
+
+    private static void saveToHdfsBySpark(List<ConsumerRecord<byte[], Weather>> records,
+                                          SparkSession ss,
+                                          String path) {
+        JavaSparkContext sparkContext = new JavaSparkContext(ss.sparkContext());
+
+        JavaRDD<ConsumerRecord<byte[], Weather>> rdd = sparkContext.parallelize(records);
+        Dataset<Row> df = ss.createDataFrame(rdd, Weather.class);
+        df.write().mode(SaveMode.Append).parquet(path);
+    }
+
+    private static SparkSession initSpark() {
+        return SparkSession.builder()
+                .master("local[*]") //.master("yarn")
+                .appName("TopicSaver3-spark")
+                .getOrCreate();
     }
 
     private static KafkaConsumer<byte[], Weather> getConsumer(Properties props, String topic) {
@@ -82,16 +109,23 @@ public class TopicSaver3 {
         return consumer;
     }
 
+
+    private static <T> Stream<T> createStream(Iterator<T> iterator) {
+        Iterable<T> iterable = () -> iterator;
+        return StreamSupport.stream(iterable.spliterator(), false);
+    }
+
     private static Properties getProps(String groupId) {
         Properties props = new Properties();
         props.put("group.id", groupId);
         props.put("bootstrap.servers", "sandbox-hdp.hortonworks.com:6667");
-        props.put("max.poll.records", 100);
+        props.put("max.poll.records", 1000);
         props.put("key.deserializer", "org.apache.kafka.common.serialization.ByteArrayDeserializer");
         props.put("value.deserializer", "kafka.serdes.weather.JsonWeatherDeserializer");
 
         //not a good idea, see
         //https://stackoverflow.com/questions/28561147/how-to-read-data-using-kafka-consumer-api-from-beginning
+        props.put(ConsumerConfig.CLIENT_ID_CONFIG, "topic-saver3-id");
         props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
 
 //        props.put("enable.auto.commit", "true");
