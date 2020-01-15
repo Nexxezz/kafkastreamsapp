@@ -1,36 +1,25 @@
 package spark;
 
-import kafka.data.HotelWeather;
-import kafka.serdes.HotelWeatherDeserializer;
-import org.apache.kafka.clients.consumer.ConsumerRecord;
+import kafka.data.Weather;
+import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
-import org.apache.kafka.common.serialization.Deserializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.Properties;
 import java.util.UUID;
 
 public class TopicSaver3 {
 
     public final static Logger LOG = LoggerFactory.getLogger(TopicSaver3.class.getName());
+
     public static final String TOPIC_NAME = "join-result-topic";
     public static final String HDFS_PATH = "hdfs://sandbox-hdp.hortonworks.com:8020/tmp/topicSaverResult";
     public static final int RECORDS_LIMIT = 1000;
-    final static Deserializer<HotelWeather> hotelWeatherDeserializer = new HotelWeatherDeserializer();
 
     public static void main(String[] args) {
-        Properties props = new Properties();
-        props.put("group.id", UUID.randomUUID().toString());
-        props.put("bootstrap.servers", "sandbox-hdp.hortonworks.com:6667");
-        props.put("enable.auto.commit", "true");
-        props.put("auto.commit.interval.ms", "1000");
-        props.put("session.timeout.ms", "30000");
-        props.put("key.deserializer", "org.apache.kafka.common.serialization.StringDeserializer");
-        props.put("value.deserializer", "kafka.serdes.HotelWeatherDeserializer");
-
         String topic;
         String path;
         int limit;
@@ -44,13 +33,149 @@ public class TopicSaver3 {
             path = args[1];
             limit = Integer.parseInt(args[2]);
         }
-        KafkaConsumer<String, HotelWeather> consumer = new KafkaConsumer(props);
-        consumer.subscribe(Arrays.asList(topic));
-        for (int i = 0; i < limit; i++) {
-            ConsumerRecords<String, HotelWeather> records = consumer.poll(100);
-            for (ConsumerRecord<String, HotelWeather> record : records)
-                System.out.println("key: " + record.key() + " " + "value: " + record.value());
+
+        final String groupId = UUID.randomUUID().toString().substring(0, 5);
+
+        LOG.info("Starting TopicSaver3 with parameters: topic={}, path={}, limit={}, groupId={}",
+                topic, path, limit, groupId);
+
+
+        final KafkaConsumer<byte[], Weather> consumer = getConsumer(getProps(groupId), topic);
+
+        try {
+            int attemptsLeft = 5;
+            int readCount = 0;
+            //todo create buffer
+
+            while (true) {
+                final ConsumerRecords<byte[], Weather> consumerRecords = consumer.poll(5000);
+
+                if (consumerRecords.count() == 0) {
+                    LOG.debug("no more messages in the topic, messages read total={}", readCount);
+                    break;
+                }
+
+                consumerRecords.forEach(record -> {
+                    LOG.debug("key={}, value={}", record.key(), record.value());
+                    //todo add records to buffer
+                });
+
+                readCount += consumerRecords.count();
+                consumer.commitAsync();
+            }
+            attemptsLeft--;
+            LOG.debug("attempts left={}", attemptsLeft);
+
+            //todo pass buffer to spark
+
+        } finally {
+            consumer.close();
+            LOG.debug("final section of try");
         }
+
+        LOG.info("END");
+    }
+
+    private static KafkaConsumer<byte[], Weather> getConsumer(Properties props, String topic) {
+        KafkaConsumer<byte[], Weather> consumer = new KafkaConsumer<>(props);
+        consumer.subscribe(Collections.singletonList(topic));
+        return consumer;
+    }
+
+    private static Properties getProps(String groupId) {
+        Properties props = new Properties();
+        props.put("group.id", groupId);
+        props.put("bootstrap.servers", "sandbox-hdp.hortonworks.com:6667");
+        props.put("max.poll.records", 100);
+        props.put("key.deserializer", "org.apache.kafka.common.serialization.ByteArrayDeserializer");
+        props.put("value.deserializer", "kafka.serdes.weather.JsonWeatherDeserializer");
+
+        //not a good idea, see
+        //https://stackoverflow.com/questions/28561147/how-to-read-data-using-kafka-consumer-api-from-beginning
+        props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
+
+//        props.put("enable.auto.commit", "true");
+//        props.put("auto.commit.interval.ms", "1000");
+//        props.put("session.timeout.ms", "30000");
+        return props;
     }
 
 }
+
+/*
+package com.cloudurable.kafka.consumer;
+import com.cloudurable.kafka.StockAppConstants;
+import com.cloudurable.kafka.producer.model.StockPrice;
+import org.apache.kafka.clients.consumer.*;
+import org.apache.kafka.common.serialization.StringDeserializer;
+...
+
+public class SimpleStockPriceConsumer {
+
+    private static Consumer<String, StockPrice> createConsumer() {
+        final Properties props = new Properties();
+
+        props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, StockAppConstants.BOOTSTRAP_SERVERS);
+        props.put(ConsumerConfig.GROUP_ID_CONFIG, "KafkaExampleConsumer");
+        props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
+
+        //Custom Deserializer
+        props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StockDeserializer.class.getName());
+        props.put(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, 500);
+
+        // Create the consumer using props.
+        final Consumer<String, StockPrice> consumer = new KafkaConsumer<>(props);
+
+        // Subscribe to the topic.
+        consumer.subscribe(Collections.singletonList(StockAppConstants.TOPIC));
+
+        return consumer;
+    }
+    ...
+}
+ */
+
+/*
+package com.cloudurable.kafka.consumer;
+...
+
+public class SimpleStockPriceConsumer {
+    ...
+
+    static void runConsumer() throws InterruptedException {
+        final Consumer<String, StockPrice> consumer = createConsumer();
+        final Map<String, StockPrice> map = new HashMap<>();
+        try {
+            final int giveUp = 1000; int noRecordsCount = 0;
+            int readCount = 0;
+            while (true) {
+                final ConsumerRecords<String, StockPrice> consumerRecords =
+                        consumer.poll(1000);
+                if (consumerRecords.count() == 0) {
+                    noRecordsCount++;
+                    if (noRecordsCount > giveUp) break;
+                    else continue;
+                }
+                readCount++;
+                consumerRecords.forEach(record -> {
+                    map.put(record.key(), record.value());
+                });
+                if (readCount % 100 == 0) {
+                    displayRecordsStatsAndStocks(map, consumerRecords);
+                }
+                consumer.commitAsync();
+            }
+        }
+        finally {
+            consumer.close();
+        }
+        System.out.println("DONE");
+    }
+    ...
+    public static void main(String... args) throws Exception {
+      runConsumer();
+    }
+    ...
+}
+
+ */

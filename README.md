@@ -36,7 +36,7 @@ docker exec -ti sandbox-hpd bash
 
 from within hdp:
 ```
-#delete old data:
+#delete old data:``
 hdfs dfs -ls /tmp/test
 
 #set variables
@@ -45,9 +45,9 @@ SPARK_HOME=/usr/hdp/3.0.1.0-187/spark2
 APP_PATH=/home/apps/kafkastreamsapp-1.0-SNAPSHOT-jar-with-dependencies.jar:$KAFKA_HOME/libs/*:$SPARK_HOME/jars/*
 
 #run the app
-java -cp $APP_PATH spark.TopicSaver spark.TopicSaver2 
+java -cp $APP_PATH spark.TopicSaver2 
 #or
-java -cp $APP_PATH spark.TopicSaver spark.TopicSaver2 <TOPIC> <PATH> <LIMIT>
+java -cp $APP_PATH spark.TopicSaver2 <TOPIC> <PATH> <LIMIT>
 
 #for example:
 java -cp $APP_PATH spark.TopicSaver spark.TopicSaver2 weather-topic hdfs://sandbox-hdp.hortonworks.com:8020/tmp/test 10000

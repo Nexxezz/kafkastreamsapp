@@ -8,7 +8,7 @@ import org.apache.kafka.common.serialization.Deserializer;
 import java.util.Map;
 
 public class JsonWeatherDeserializer implements Deserializer<Weather> {
-    
+
     private ObjectMapper objectMapper = new ObjectMapper();
 
 
@@ -30,6 +30,8 @@ public class JsonWeatherDeserializer implements Deserializer<Weather> {
     public Weather deserialize(String topic, byte[] bytes) {
         if (bytes == null)
             return null;
+
+        if (!(new String(bytes).startsWith("{"))) return null; //not json TODO
 
         try {
             return objectMapper.treeToValue(objectMapper.readTree(bytes), Weather.class);
