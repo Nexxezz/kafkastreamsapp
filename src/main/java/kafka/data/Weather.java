@@ -4,12 +4,14 @@ package kafka.data;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.*;
 
+import java.io.Serializable;
+
 @Getter
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
 @EqualsAndHashCode
-public class Weather {
+public class Weather implements Serializable {
 
     @JsonProperty("lng")
     private Double lng;
