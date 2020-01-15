@@ -22,9 +22,8 @@ public class HotelWeatherDeserializer implements Deserializer<HotelWeather> {
     @Override
     public HotelWeather deserialize(String topic, byte[] data) {
         if (data == null) {
-            return null;
+            return new HotelWeather();
         }
-
         return HotelWeather.ofString(new String(data));
     }
 

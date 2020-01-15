@@ -1,16 +1,13 @@
 package kafka.data;
 
-import lombok.AllArgsConstructor;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
 import java.io.Serializable;
 
 @Getter
 @Setter
 @AllArgsConstructor
-//@NoArgsConstructor
+@NoArgsConstructor
 @EqualsAndHashCode
 public class HotelWeather implements Serializable {
 
@@ -35,6 +32,7 @@ public class HotelWeather implements Serializable {
                 weatherDate;
     }
 
+
     public static HotelWeather ofString(String str) {
         String[] arr = str.split(COMMA);
         return new HotelWeather(
@@ -43,5 +41,9 @@ public class HotelWeather implements Serializable {
                 Double.valueOf(arr[2]),
                 Double.valueOf(arr[3]),
                 arr[4]);
+    }
+
+    public static boolean nonNull(HotelWeather hotelWeather) {
+        return hotelWeather.hotelId != null;
     }
 }

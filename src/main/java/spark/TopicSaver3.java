@@ -63,13 +63,13 @@ public class TopicSaver3 {
                     LOG.debug("no more messages in the topic, messages read total={}", totalRead);
                     isTopicEmpty = true;
                 } else {
-                    if (LOG.isDebugEnabled()) {
-                        consumerRecords.forEach(record -> LOG.debug("key={}, value={}", record.key(), record.value()));
-                    }
-
+//                    if (LOG.isDebugEnabled()) {
+//                        consumerRecords.forEach(record -> LOG.debug("key={}, value={}", record.key(), record.value()));
+//                    }
                     List<HotelWeather> filteredRecords = createStream(consumerRecords.iterator())
                             .map(ConsumerRecord::value)
                             .filter(Objects::nonNull)
+                            .filter(HotelWeather::nonNull)
                             .collect(Collectors.toList());
 
                     saveToHdfsBySpark(filteredRecords, ss, path);
@@ -94,7 +94,7 @@ public class TopicSaver3 {
 
         JavaRDD<HotelWeather> rdd = sparkContext.parallelize(records);
         Dataset<Row> df = ss.createDataFrame(rdd, Weather.class);
-        df.write().mode(SaveMode.Append).parquet(path);
+        df.coalesce(1).write().mode(SaveMode.Append).parquet(path);
     }
 
     private static SparkSession initSpark() {
