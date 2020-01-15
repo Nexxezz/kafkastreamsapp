@@ -25,51 +25,46 @@ public class TopicSaver3 {
 
     public static final String TOPIC_NAME = "join-result-topic";
     public static final String HDFS_PATH = "hdfs://sandbox-hdp.hortonworks.com:8020/tmp/topicSaverResult";
-    public static final int RECORDS_LIMIT = 1000;
 
     private static final int KAFKA_MAX_POLL_RECORDS = 1000;
     private static final int KAFKA_POLL_TIMEOUT_MS = 10000;
-    private static final int SPARK_RECORDS_IN_FILE = 100_000;
+    private static final int RECORDS_BUFFER_SIZE = 100_000;
 
     public static void main(String[] args) {
         String topic;
         String path;
-        int limit;
 
         if (args.length == 0) {
             topic = TOPIC_NAME;
             path = HDFS_PATH;
-            limit = RECORDS_LIMIT;
         } else {
             topic = args[0];
             path = args[1];
-            limit = Integer.parseInt(args[2]);
         }
 
         final String groupId = UUID.randomUUID().toString().substring(0, 5);
 
-        LOG.info("Starting TopicSaver3 with parameters: topic={}, path={}, limit={}, groupId={}",
-                topic, path, limit, groupId);
+        LOG.info("Starting TopicSaver3 with parameters: topic={}, path={}, groupId={}",
+                topic, path, groupId);
 
-        final KafkaConsumer<byte[], Weather> consumer = getConsumer(getProps(groupId), topic);
-        SparkSession ss = initSpark();
+        try (SparkSession ss = initSpark();
+             KafkaConsumer<byte[], Weather> consumer = getConsumer(getProps(groupId), topic)) {
 
-        ArrayList<Weather> buffer = new ArrayList<>(SPARK_RECORDS_IN_FILE);
-
-        try {
+            ArrayList<Weather> buffer = new ArrayList<>(RECORDS_BUFFER_SIZE);
             int totalRead = 0;
             boolean isTopicEmpty = false;
 
             while (!isTopicEmpty) {
-                List<Weather> records = List.of();
+                List<Weather> records = Collections.emptyList();
                 final ConsumerRecords<byte[], Weather> consumerRecords = consumer.poll(KAFKA_POLL_TIMEOUT_MS);
                 if (consumerRecords.count() == 0) {
-                    LOG.debug("no more messages in the topic, messages read total={}", totalRead);
+                    LOG.trace("no more messages in the topic, messages read total={}", totalRead);
                     isTopicEmpty = true;
                 } else {
-                    if (LOG.isDebugEnabled()) {
-                        consumerRecords.forEach(record -> LOG.debug("key={}, value={}", record.key(), record.value()));
-                    }
+                    LOG.trace("read {} records from topic", consumerRecords.count());
+//                    if (LOG.isDebugEnabled()) {
+//                        consumerRecords.forEach(record -> LOG.debug("key={}, value={}", record.key(), record.value()));
+//                    }
                     records = createStream(consumerRecords.iterator())
                             .map(ConsumerRecord::value)
                             .filter(Objects::nonNull)
@@ -77,19 +72,28 @@ public class TopicSaver3 {
                     totalRead += consumerRecords.count();
                     consumer.commitAsync();
                 }
-                saveToHdfs(records, isTopicEmpty, ss, path);
+                saveToHdfs(buffer, records, isTopicEmpty, ss, path);
             }
         } finally {
             LOG.debug("final section of try");
-            consumer.close();
-            ss.stop();
         }
         LOG.info("END");
     }
 
-
-    private static void saveToHdfs(List<Weather> records, boolean isTopicEmpty, SparkSession ss, String path) {
-
+    private static void saveToHdfs(List<Weather> buffer, List<Weather> records,
+                                   boolean isTopicEmpty, SparkSession ss, String path) {
+        if (isTopicEmpty) {
+            LOG.trace("saving rest of the buffer to hdfs, size={}", buffer.size());
+            saveToHdfsBySpark(buffer, ss, path);
+        } else if (buffer.size() + records.size() >= RECORDS_BUFFER_SIZE) {
+            LOG.trace("no free space in buffer, saving its records to hdfs");
+            saveToHdfsBySpark(buffer, ss, path);
+            buffer.clear();
+            buffer.addAll(records);
+        } else {
+            buffer.addAll(records);
+            LOG.trace("buffer is filled in with new records, size now is {}", buffer.size());
+        }
     }
 
     private static void saveToHdfsBySpark(List<Weather> records,
@@ -98,7 +102,8 @@ public class TopicSaver3 {
         JavaSparkContext sparkContext = new JavaSparkContext(ss.sparkContext());
         JavaRDD<Weather> rdd = sparkContext.parallelize(records);
         Dataset<Row> df = ss.createDataFrame(rdd, Weather.class);
-        df.write().mode(SaveMode.Append).parquet(path);
+        LOG.trace("appending output with {} records", records.size());
+        df.coalesce(1).write().mode(SaveMode.Append).parquet(path);
     }
 
     private static SparkSession initSpark() {

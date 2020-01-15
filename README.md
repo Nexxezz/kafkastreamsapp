@@ -80,10 +80,10 @@ APP_PATH=/home/apps/kafkastreamsapp-1.0-SNAPSHOT-jar-with-dependencies.jar:$KAFK
 #run the app
 java -cp $APP_PATH spark.TopicSaver3 
 #or
-java -cp $APP_PATH spark.TopicSaver3 <TOPIC> <PATH> <LIMIT>
+java -cp $APP_PATH spark.TopicSaver3 <TOPIC> <PATH>
 
 #for example:
-java -cp $APP_PATH spark.TopicSaver3 weather-topic hdfs://sandbox-hdp.hortonworks.com:8020/tmp/test 100
+java -cp $APP_PATH spark.TopicSaver3 weather-topic hdfs://sandbox-hdp.hortonworks.com:8020/tmp/test
 ```
 go to HDFS and check data in parquet:
 ```
