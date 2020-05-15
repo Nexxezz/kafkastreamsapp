@@ -12,7 +12,7 @@
         <hdp.version>3.0.1.0-187</hdp.version>
         <spark.version>2.3.1.${hdp.version}</spark.version>
         <kafka.version>1.1.1.${hdp.version}</kafka.version>
-        <jackson.version>2.9.6</jackson.version>
+        <jackson.version>2.11.0</jackson.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
